@@ -1,42 +1,12 @@
-#define ENC_UP 1
-#define ENC_NONE 0
-#define ENC_DOWN -1
-
-class RotaryEncoder {
-  public:
-
-  // Digital I/O pins connected to the encoder
-  unsigned int pinCk: 4;
-  unsigned int pinDt: 4;
-  unsigned int pinSw: 4;
-
-  // State flags: true when waiting for asserted state to fall back to idle
-  bool encQuiescing = false;
-  bool swQuiescing = false;
-
-  // Delay between sampling control at idle (0 - 15 ms). Note: lower resolution
-  // sampling (higher delay) can cause more frequent misreads!
-  unsigned int sampleDelay: 4;
-
-  // Last sample time
-  unsigned long timeLastUpdate;
-
-  // A multivalued return type
-  struct Value {
-    int8_t increment;
-    bool switchState;
-  };
-
-  // Create a new RotaryEncoder interface connected to the given pins
-  RotaryEncoder(int ckPin, int dtPin, int swPin = ENC_NONE, int sampleTime = 15);
-
-  // Call with current time in us to check current encoder state
-  Value Poll(unsigned long now = micros());
-};
-
+#include "RotaryEncoder.h"
 
 RotaryEncoder::RotaryEncoder(int ckPin, int dtPin, int swPin, int sampleTime) :
-    pinCk(ckPin), pinDt(dtPin), pinSw(swPin), sampleDelay(sampleTime) {
+    pinCk(ckPin),
+    pinDt(dtPin),
+    pinSw(swPin),
+    encQuiescing(false),
+    swQuiescing(false),
+    sampleDelay(sampleTime) {
   pinMode(pinCk, INPUT);
   pinMode(pinDt, INPUT);
 
@@ -89,23 +59,4 @@ RotaryEncoder::Value RotaryEncoder::Poll(unsigned long now) {
   timeLastUpdate = now;
   
   return value;
-}
-
-RotaryEncoder r(2, 3, 4, 1);
-
-void setup() {
-  Serial.begin(115200);
-}
-
-void loop() {  
-  unsigned long t_now = micros();
-  RotaryEncoder::Value v = r.Poll(t_now);
-
-  switch (v.increment) {
-    case ENC_UP: Serial.println("UP!"); break;
-    case ENC_DOWN: Serial.println("DOWN!"); break;
-  }
-
-  if (v.switchState)
-    Serial.println("Button press");
 }
